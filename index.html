@@ -72,7 +72,7 @@ li{
 <button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
 
 <audio id="alarmSound" loop>
-<source src="https://www.soundjay.com/emergency/sounds/police-siren-01.mp3">
+  <source src="https://www.soundjay.com/emergency/sounds/police-siren-01.mp3">
 </audio>
 
 <ul id="roomList"></ul>
@@ -85,7 +85,7 @@ let systemActive = false;
 
 function activateSystem(){
   systemActive = true;
-  alert("System Activated");
+  alert("System Activated!");
 }
 
 function stopAlarm(){
@@ -112,31 +112,31 @@ var alarmSound = document.getElementById("alarmSound");
 
 database.ref("rooms").on("value", function(snapshot){
 
-roomList.innerHTML="";
+  roomList.innerHTML = "";
 
-snapshot.forEach(function(childSnapshot){
+  snapshot.forEach(function(childSnapshot){
 
-var room = childSnapshot.key;
-var status = childSnapshot.val().status;
+    var room = childSnapshot.key;
+    var status = childSnapshot.val().status;
 
-var li = document.createElement("li");
-li.innerText = room + " - " + status;
+    var li = document.createElement("li");
+    li.innerText = room + " - " + status;
 
-if(status=="ALERT"){
-  li.classList.add("alert");
+    if(status == "ALERT"){
+      li.classList.add("alert");
 
-  if(systemActive){
-    alarmSound.play();
-    document.getElementById("stopBtn").style.display="inline";
-  }
+      if(systemActive){
+        alarmSound.play();
+        document.getElementById("stopBtn").style.display="inline";
+      }
 
-}else{
-  li.classList.add("normal");
-}
+    }else{
+      li.classList.add("normal");
+    }
 
-roomList.appendChild(li);
+    roomList.appendChild(li);
 
-});
+  });
 
 });
 
@@ -144,4 +144,3 @@ roomList.appendChild(li);
 
 </body>
 </html>
-
