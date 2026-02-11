@@ -17,6 +17,25 @@ h1{
   padding:15px;
 }
 
+button{
+  padding:12px 25px;
+  font-size:16px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+#activateBtn{
+  background:green;
+  color:white;
+}
+
+#stopBtn{
+  background:red;
+  color:white;
+  display:none;
+}
+
 @keyframes flash{
   0%{background:red;}
   50%{background:white;}
@@ -24,8 +43,8 @@ h1{
 }
 
 .alert{
-  color:white;
   animation:flash 1s infinite;
+  color:white;
 }
 
 .normal{
@@ -47,11 +66,33 @@ li{
 
 <h1>Anti-Bullying Monitor</h1>
 
+<button id="activateBtn" onclick="activateSystem()">ACTIVATE SYSTEM</button>
+<br><br>
+
+<button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
+
+<audio id="alarmSound" loop>
+<source src="https://www.soundjay.com/emergency/sounds/police-siren-01.mp3">
+</audio>
+
 <ul id="roomList"></ul>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase.js"></script>
 
 <script>
+
+let systemActive = false;
+
+function activateSystem(){
+  systemActive = true;
+  alert("System Activated");
+}
+
+function stopAlarm(){
+  alarmSound.pause();
+  alarmSound.currentTime = 0;
+  document.getElementById("stopBtn").style.display="none";
+}
 
 var firebaseConfig = {
   apiKey: "AIzaSyAMstKG96DUKOPbJQZKKssWtHbc4iLtccI",
@@ -67,6 +108,7 @@ firebase.initializeApp(firebaseConfig);
 
 var database = firebase.database();
 var roomList = document.getElementById("roomList");
+var alarmSound = document.getElementById("alarmSound");
 
 database.ref("rooms").on("value", function(snapshot){
 
@@ -83,12 +125,10 @@ li.innerText = room + " - " + status;
 if(status=="ALERT"){
   li.classList.add("alert");
 
-  // 🔔 VIBRATION
-  if(navigator.vibrate){
-    navigator.vibrate([500,300,500,300,500]);
+  if(systemActive){
+    alarmSound.play();
+    document.getElementById("stopBtn").style.display="inline";
   }
-
-  alert("⚠ EMERGENCY! Bullying detected at " + room);
 
 }else{
   li.classList.add("normal");
@@ -104,3 +144,4 @@ roomList.appendChild(li);
 
 </body>
 </html>
+
