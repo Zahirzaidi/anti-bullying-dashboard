@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Anti-Bullying Dashboard</title>
+
+<style>
+body{
+  font-family: Arial;
+  background:#f2f2f2;
+  text-align:center;
+}
+
+h1{
+  background:#1e88e5;
+  color:white;
+  padding:15px;
+}
+
+@keyframes flash{
+  0%{background:red;}
+  50%{background:white;}
+  100%{background:red;}
+}
+
+.alert{
+  color:white;
+  animation:flash 1s infinite;
+}
+
+.normal{
+  background:#4caf50;
+  color:white;
+}
+
+li{
+  margin:10px auto;
+  padding:15px;
+  width:300px;
+  border-radius:8px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Anti-Bullying Monitor</h1>
+
+<ul id="roomList"></ul>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase.js"></script>
+
+<script>
+
+var firebaseConfig = {
+  apiKey: "AIzaSyAMstKG96DUKOPbJQZKKssWtHbc4iLtccI",
+  authDomain: "antibullyingsystem-95305.firebaseapp.com",
+  databaseURL: "https://antibullyingsystem-95305-default-rtdb.firebaseio.com",
+  projectId: "antibullyingsystem-95305",
+  storageBucket: "antibullyingsystem-95305.firebasestorage.app",
+  messagingSenderId: "808658741708",
+  appId: "1:808658741708:web:fa50c6a83341e26bc6d569"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+var database = firebase.database();
+var roomList = document.getElementById("roomList");
+
+database.ref("rooms").on("value", function(snapshot){
+
+roomList.innerHTML="";
+
+snapshot.forEach(function(childSnapshot){
+
+var room = childSnapshot.key;
+var status = childSnapshot.val().status;
+
+var li = document.createElement("li");
+li.innerText = room + " - " + status;
+
+if(status=="ALERT"){
+  li.classList.add("alert");
+
+  // 🔔 VIBRATION
+  if(navigator.vibrate){
+    navigator.vibrate([500,300,500,300,500]);
+  }
+
+  alert("⚠ EMERGENCY! Bullying detected at " + room);
+
+}else{
+  li.classList.add("normal");
+}
+
+roomList.appendChild(li);
+
+});
+
+});
+
+</script>
+
+</body>
+</html>
