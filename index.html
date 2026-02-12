@@ -55,9 +55,10 @@ button{
 li{
   margin:10px auto;
   padding:15px;
-  width:300px;
+  width:320px;
   border-radius:8px;
   font-size:18px;
+  list-style:none;
 }
 </style>
 </head>
@@ -75,7 +76,11 @@ li{
   <source src="siren.mp3" type="audio/mpeg">
 </audio>
 
+<h2>Room Status</h2>
 <ul id="roomList"></ul>
+
+<h2>Alert History</h2>
+<ul id="historyList"></ul>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase.js"></script>
 
@@ -108,6 +113,7 @@ firebase.initializeApp(firebaseConfig);
 
 var database = firebase.database();
 var roomList = document.getElementById("roomList");
+var historyList = document.getElementById("historyList");
 var alarmSound = document.getElementById("alarmSound");
 
 database.ref("rooms").on("value", function(snapshot){
@@ -119,8 +125,11 @@ database.ref("rooms").on("value", function(snapshot){
     var room = childSnapshot.key;
     var status = childSnapshot.val().status;
 
+    var now = new Date();
+    var time = now.toLocaleTimeString();
+
     var li = document.createElement("li");
-    li.innerText = room + " - " + status;
+    li.innerText = room + " - " + status + " - " + time;
 
     if(status == "ALERT"){
       li.classList.add("alert");
@@ -130,11 +139,40 @@ database.ref("rooms").on("value", function(snapshot){
         document.getElementById("stopBtn").style.display="inline";
       }
 
+      // SAVE TO HISTORY
+      database.ref("history").push({
+        room: room,
+        status: status,
+        time: now.toLocaleTimeString(),
+        date: now.toLocaleDateString()
+      });
+
     }else{
       li.classList.add("normal");
     }
 
     roomList.appendChild(li);
+
+  });
+
+});
+
+database.ref("history").on("value", function(snapshot){
+
+  historyList.innerHTML = "";
+
+  snapshot.forEach(function(child){
+
+    var data = child.val();
+
+    var li = document.createElement("li");
+    li.innerText =
+      data.room + " | " +
+      data.status + " | " +
+      data.time + " | " +
+      data.date;
+
+    historyList.appendChild(li);
 
   });
 
