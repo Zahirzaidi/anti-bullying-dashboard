@@ -11,7 +11,7 @@ body{
   text-align:center;
 }
 
-/* LOGIN */
+/* LOGIN BOX */
 #loginBox{
   width:300px;
   margin:150px auto;
@@ -80,8 +80,9 @@ li{
 <!-- LOGIN -->
 <div id="loginBox">
   <h2>Admin Login</h2>
-  <input id="username" placeholder="Username"><br>
-  <input id="password" type="password" placeholder="Password"><br>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <br>
   <button onclick="login()">LOGIN</button>
 </div>
 
@@ -89,6 +90,8 @@ li{
 <div id="dashboard">
 
 <h1>Anti-Bullying Monitor</h1>
+
+<h3 id="counter">Total Alerts: 0</h3>
 
 <button onclick="activateSystem()">ACTIVATE SYSTEM</button>
 <br><br>
@@ -114,8 +117,8 @@ li{
 
 // LOGIN
 function login(){
-  var u = document.getElementById("username").value;
-  var p = document.getElementById("password").value;
+  var u=document.getElementById("username").value;
+  var p=document.getElementById("password").value;
 
   if(u=="admin" && p=="admin123"){
     document.getElementById("loginBox").style.display="none";
@@ -145,7 +148,7 @@ function clearHistory(){
   alert("History Cleared");
 }
 
-// FIREBASE CONFIG
+// FIREBASE
 var firebaseConfig = {
   apiKey: "AIzaSyAMstKG96DUKOPbJQZKKssWtHbc4iLtccI",
   authDomain: "antibullyingsystem-95305.firebaseapp.com",
@@ -205,10 +208,13 @@ roomList.appendChild(li);
 
 });
 
-// SHOW HISTORY
+// HISTORY + COUNTER
 database.ref("history").on("value",function(snapshot){
 
 historyList.innerHTML="";
+
+document.getElementById("counter").innerText =
+"Total Alerts: " + snapshot.numChildren();
 
 snapshot.forEach(function(child){
 var d=child.val();
