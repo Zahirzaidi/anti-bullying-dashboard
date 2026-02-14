@@ -20,8 +20,22 @@ button{padding:8px 15px;margin:3px;cursor:pointer;}
 
 h1{background:#1e88e5;color:white;padding:15px;}
 
-.alert{background:red;color:white;animation:blink 1s infinite;}
-@keyframes blink{0%{opacity:1;}50%{opacity:0.4;}100%{opacity:1;}}
+.alert{
+  background:red;color:white;
+  animation:blink 1s infinite;
+}
+
+.emergencyBlink{
+  background:red;
+  color:white;
+  animation:blink 1s infinite;
+}
+
+@keyframes blink{
+  0%{opacity:1;}
+  50%{opacity:0.4;}
+  100%{opacity:1;}
+}
 
 .normal{background:green;color:white;}
 
@@ -51,7 +65,7 @@ li{
 
 <h3 id="counter">Total Alerts: 0</h3>
 
-<button onclick="emergencyAlert()">🚨 EMERGENCY ALERT</button><br><br>
+<button id="emergencyBtn" onclick="emergencyAlert()">🚨 EMERGENCY ALERT</button><br><br>
 
 <button onclick="activateSystem()">ACTIVATE SYSTEM</button><br><br>
 <button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
@@ -111,7 +125,6 @@ let systemActive=false;
 let lastStatus={};
 let currentBlock="ALL";
 let currentFloor="ALL";
-
 let currentUser="";
 let currentRole="";
 
@@ -164,6 +177,8 @@ function stopAlarm(){
  alarmSound.pause();
  alarmSound.currentTime=0;
  stopBtn.style.display="none";
+
+ emergencyBtn.classList.remove("emergencyBlink");
 }
 
 function clearHistory(){
@@ -186,6 +201,11 @@ function emergencyAlert(){
 
  var now=new Date();
 
+ alarmSound.play();
+ stopBtn.style.display="inline";
+
+ emergencyBtn.classList.add("emergencyBlink");
+
  var msg=
  "🚨 EMERGENCY ALERT 🚨\n\n"+
  "Triggered By: "+currentUser+" ("+currentRole+")\n"+
@@ -203,7 +223,6 @@ function emergencyAlert(){
   date:now.toLocaleDateString()
  });
 
- alert("Emergency Alert Sent!");
 }
 
 // ================= ROOMS =================
@@ -272,6 +291,20 @@ function refreshRooms(){
 
 database.ref("rooms").on("value",function(){
  refreshRooms();
+});
+
+// ===== GLOBAL ALERT DETECTOR =====
+database.ref("rooms").on("value",function(snapshot){
+
+ snapshot.forEach(function(child){
+
+  if(child.val().status=="ALERT" && systemActive){
+    alarmSound.play();
+    stopBtn.style.display="inline";
+  }
+
+ });
+
 });
 
 // ================= HISTORY =================
