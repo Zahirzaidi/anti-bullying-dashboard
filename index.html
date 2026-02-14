@@ -5,46 +5,23 @@
 <title>Anti-Bullying Dashboard</title>
 
 <style>
-body{
-  font-family: Arial;
-  background:#f2f2f2;
-  text-align:center;
-}
+body{font-family:Arial;background:#f2f2f2;text-align:center;}
 
 #loginBox{
-  width:300px;
-  margin:150px auto;
-  padding:20px;
-  background:white;
-  border-radius:10px;
+  width:300px;margin:150px auto;padding:20px;
+  background:white;border-radius:10px;
   box-shadow:0 0 10px gray;
 }
 
-input{
-  width:90%;
-  padding:10px;
-  margin:8px;
-}
+input{width:90%;padding:10px;margin:8px;}
+button{padding:8px 15px;margin:3px;cursor:pointer;}
 
-button{
-  padding:8px 15px;
-  margin:3px;
-  cursor:pointer;
-}
+#dashboard{display:none;}
 
-#dashboard{
-  display:none;
-}
-
-h1{
-  background:#1e88e5;
-  color:white;
-  padding:15px;
-}
+h1{background:#1e88e5;color:white;padding:15px;}
 
 .alert{
-  background:red;
-  color:white;
+  background:red;color:white;
   animation:blink 1s infinite;
 }
 
@@ -54,23 +31,15 @@ h1{
   100%{opacity:1;}
 }
 
-.normal{
-  background:green;
-  color:white;
-}
+.normal{background:green;color:white;}
 
 li{
-  list-style:none;
-  margin:6px auto;
-  padding:10px;
-  width:320px;
-  border-radius:6px;
+  list-style:none;margin:6px auto;
+  padding:10px;width:320px;border-radius:6px;
 }
 
 #stopBtn{
-  background:red;
-  color:white;
-  display:none;
+  background:red;color:white;display:none;
 }
 </style>
 </head>
@@ -81,7 +50,7 @@ li{
 <div id="loginBox">
   <h2>Admin Login</h2>
   <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
+  <input id="password" type="password">
   <button onclick="login()">LOGIN</button>
 </div>
 
@@ -93,19 +62,24 @@ li{
 <h3 id="counter">Total Alerts: 0</h3>
 
 <button onclick="activateSystem()">ACTIVATE SYSTEM</button><br><br>
-
 <button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
 
 <audio id="alarmSound" loop>
   <source src="siren.mp3">
 </audio>
 
+<h2>Filter Block</h2>
+<button onclick="setBlockFilter('ALL')">ALL</button>
+<button onclick="setBlockFilter('JT')">JATI</button>
+<button onclick="setBlockFilter('MR')">MERANTI</button>
+
+<h2>Filter Floor</h2>
+<button onclick="setFloorFilter('ALL')">ALL</button>
+<button onclick="setFloorFilter('0')">ARAS 0</button>
+<button onclick="setFloorFilter('1')">ARAS 1</button>
+<button onclick="setFloorFilter('2')">ARAS 2</button>
+
 <h2>Room Status</h2>
-
-<button onclick="setFilter('ALL')">ALL</button>
-<button onclick="setFilter('JT')">JATI</button>
-<button onclick="setFilter('MR')">MERANTI</button>
-
 <ul id="roomList"></ul>
 
 <h2>Alert History</h2>
@@ -118,24 +92,37 @@ li{
 
 <script>
 
+// ================= TELEGRAM SETTINGS =================
+const TELEGRAM_TOKEN = "8379959788:AAEoE1nv6rCCiMEzNeILgkHUxYf60TEuC58";
+const CHAT_ID = "644110489";
+
+function sendTelegram(message){
+  fetch("https://api.telegram.org/bot"+TELEGRAM_TOKEN+"/sendMessage",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      chat_id:CHAT_ID,
+      text:message
+    })
+  });
+}
+
 // LOGIN
 function login(){
-  var u=document.getElementById("username").value;
-  var p=document.getElementById("password").value;
-
-  if(u=="admin" && p=="admin123"){
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("dashboard").style.display="block";
+  if(username.value=="admin" && password.value=="admin123"){
+    loginBox.style.display="none";
+    dashboard.style.display="block";
     refreshRooms();
   }else{
-    alert("Wrong Login!");
+    alert("Wrong Login");
   }
 }
 
 // SYSTEM
 let systemActive=false;
 let lastStatus={};
-let currentFilter="ALL";
+let currentBlock="ALL";
+let currentFloor="ALL";
 
 function activateSystem(){
   systemActive=true;
@@ -145,7 +132,7 @@ function activateSystem(){
 function stopAlarm(){
   alarmSound.pause();
   alarmSound.currentTime=0;
-  document.getElementById("stopBtn").style.display="none";
+  stopBtn.style.display="none";
 }
 
 function clearHistory(){
@@ -153,20 +140,25 @@ function clearHistory(){
   alert("History Cleared");
 }
 
-function setFilter(type){
-  currentFilter=type;
+function setBlockFilter(b){
+  currentBlock=b;
   refreshRooms();
 }
 
-// FIREBASE
-var firebaseConfig = {
-  apiKey: "AIzaSyAMstKG96DUKOPbJQZKKssWtHbc4iLtccI",
-  authDomain: "antibullyingsystem-95305.firebaseapp.com",
-  databaseURL: "https://antibullyingsystem-95305-default-rtdb.firebaseio.com",
-  projectId: "antibullyingsystem-95305",
-  storageBucket: "antibullyingsystem-95305.firebasestorage.app",
-  messagingSenderId: "808658741708",
-  appId: "1:808658741708:web:fa50c6a83341e26bc6d569"
+function setFloorFilter(f){
+  currentFloor=f;
+  refreshRooms();
+}
+
+// FIREBASE CONFIG
+var firebaseConfig={
+  apiKey:"AIzaSyAMstKG96DUKOPbJQZKKssWtHbc4iLtccI",
+  authDomain:"antibullyingsystem-95305.firebaseapp.com",
+  databaseURL:"https://antibullyingsystem-95305-default-rtdb.firebaseio.com",
+  projectId:"antibullyingsystem-95305",
+  storageBucket:"antibullyingsystem-95305.firebasestorage.app",
+  messagingSenderId:"808658741708",
+  appId:"1:808658741708:web:fa50c6a83341e26bc6d569"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -176,7 +168,7 @@ var roomList=document.getElementById("roomList");
 var historyList=document.getElementById("historyList");
 var alarmSound=document.getElementById("alarmSound");
 
-// REFRESH ROOMS (FILTER WORKING)
+// REFRESH ROOMS
 function refreshRooms(){
 
 database.ref("rooms").once("value",function(snapshot){
@@ -188,11 +180,11 @@ snapshot.forEach(function(child){
 var room=child.key;
 var status=child.val().status;
 
-if(currentFilter!="ALL"){
-  if(!room.startsWith(currentFilter)){
-    return;
-  }
-}
+// BLOCK FILTER
+if(currentBlock!="ALL" && !room.startsWith(currentBlock)) return;
+
+// FLOOR FILTER
+if(currentFloor!="ALL" && room[2]!=currentFloor) return;
 
 var li=document.createElement("li");
 li.innerText=room+" - "+status;
@@ -202,11 +194,20 @@ if(status=="ALERT"){
 
   if(systemActive){
     alarmSound.play();
-    document.getElementById("stopBtn").style.display="inline";
+    stopBtn.style.display="inline";
   }
 
   if(lastStatus[room]!="ALERT"){
     var now=new Date();
+
+    var msg=
+    "🚨 ANTI-BULLYING ALERT 🚨\n\n"+
+    "Room: "+room+"\n"+
+    "Time: "+now.toLocaleTimeString()+"\n"+
+    "Date: "+now.toLocaleDateString();
+
+    sendTelegram(msg);
+
     database.ref("history").push({
       room:room,
       status:"ALERT",
@@ -228,7 +229,7 @@ roomList.appendChild(li);
 
 }
 
-// AUTO UPDATE ROOM STATUS
+// AUTO UPDATE
 database.ref("rooms").on("value",function(){
   refreshRooms();
 });
@@ -237,8 +238,7 @@ database.ref("rooms").on("value",function(){
 database.ref("history").on("value",function(snapshot){
 
 historyList.innerHTML="";
-document.getElementById("counter").innerText =
-"Total Alerts: " + snapshot.numChildren();
+counter.innerText="Total Alerts: "+snapshot.numChildren();
 
 snapshot.forEach(function(child){
 var d=child.val();
