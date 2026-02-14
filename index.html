@@ -11,23 +11,60 @@ body{
   text-align:center;
 }
 
+/* LOGIN */
+#loginBox{
+  width:300px;
+  margin:150px auto;
+  padding:20px;
+  background:white;
+  border-radius:10px;
+  box-shadow:0 0 10px gray;
+}
+
+input{
+  width:90%;
+  padding:10px;
+  margin:8px;
+}
+
+button{
+  padding:10px 20px;
+  cursor:pointer;
+}
+
+#dashboard{
+  display:none;
+}
+
 h1{
   background:#1e88e5;
   color:white;
   padding:15px;
 }
 
-button{
-  padding:12px 25px;
-  font-size:16px;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
+.alert{
+  background:red;
+  color:white;
+  animation:blink 1s infinite;
 }
 
-#activateBtn{
+@keyframes blink{
+  0%{opacity:1;}
+  50%{opacity:0.4;}
+  100%{opacity:1;}
+}
+
+.normal{
   background:green;
   color:white;
+}
+
+li{
+  list-style:none;
+  margin:8px auto;
+  padding:10px;
+  width:320px;
+  border-radius:6px;
 }
 
 #stopBtn{
@@ -35,70 +72,80 @@ button{
   color:white;
   display:none;
 }
-
-@keyframes flash{
-  0%{background:red;}
-  50%{background:white;}
-  100%{background:red;}
-}
-
-.alert{
-  animation:flash 1s infinite;
-  color:white;
-}
-
-.normal{
-  background:#4caf50;
-  color:white;
-}
-
-li{
-  margin:10px auto;
-  padding:15px;
-  width:320px;
-  border-radius:8px;
-  font-size:18px;
-  list-style:none;
-}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+<div id="loginBox">
+  <h2>Admin Login</h2>
+  <input id="username" placeholder="Username"><br>
+  <input id="password" type="password" placeholder="Password"><br>
+  <button onclick="login()">LOGIN</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
 <h1>Anti-Bullying Monitor</h1>
 
-<button id="activateBtn" onclick="activateSystem()">ACTIVATE SYSTEM</button>
+<button onclick="activateSystem()">ACTIVATE SYSTEM</button>
 <br><br>
 
 <button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
 
 <audio id="alarmSound" loop>
-  <source src="siren.mp3" type="audio/mpeg">
+  <source src="siren.mp3">
 </audio>
 
 <h2>Room Status</h2>
 <ul id="roomList"></ul>
 
 <h2>Alert History</h2>
+<button onclick="clearHistory()">CLEAR HISTORY</button>
 <ul id="historyList"></ul>
+
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase.js"></script>
 
 <script>
 
-let systemActive = false;
+// LOGIN
+function login(){
+  var u = document.getElementById("username").value;
+  var p = document.getElementById("password").value;
+
+  if(u=="admin" && p=="admin123"){
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("dashboard").style.display="block";
+  }else{
+    alert("Wrong Login!");
+  }
+}
+
+// SYSTEM
+let systemActive=false;
+let lastStatus={};
 
 function activateSystem(){
-  systemActive = true;
-  alert("System Activated!");
+  systemActive=true;
+  alert("System Activated");
 }
 
 function stopAlarm(){
   alarmSound.pause();
-  alarmSound.currentTime = 0;
+  alarmSound.currentTime=0;
   document.getElementById("stopBtn").style.display="none";
 }
 
+function clearHistory(){
+  database.ref("history").remove();
+  alert("History Cleared");
+}
+
+// FIREBASE CONFIG
 var firebaseConfig = {
   apiKey: "AIzaSyAMstKG96DUKOPbJQZKKssWtHbc4iLtccI",
   authDomain: "antibullyingsystem-95305.firebaseapp.com",
@@ -111,70 +158,64 @@ var firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-var database = firebase.database();
-var roomList = document.getElementById("roomList");
-var historyList = document.getElementById("historyList");
-var alarmSound = document.getElementById("alarmSound");
+var database=firebase.database();
+var roomList=document.getElementById("roomList");
+var historyList=document.getElementById("historyList");
+var alarmSound=document.getElementById("alarmSound");
 
-database.ref("rooms").on("value", function(snapshot){
+// ROOM STATUS
+database.ref("rooms").on("value",function(snapshot){
 
-  roomList.innerHTML = "";
+roomList.innerHTML="";
 
-  snapshot.forEach(function(childSnapshot){
+snapshot.forEach(function(child){
 
-    var room = childSnapshot.key;
-    var status = childSnapshot.val().status;
+var room=child.key;
+var status=child.val().status;
 
-    var now = new Date();
-    var time = now.toLocaleTimeString();
+var li=document.createElement("li");
+li.innerText=room+" - "+status;
 
-    var li = document.createElement("li");
-    li.innerText = room + " - " + status + " - " + time;
+if(status=="ALERT"){
+  li.className="alert";
 
-    if(status == "ALERT"){
-      li.classList.add("alert");
+  if(systemActive){
+    alarmSound.play();
+    document.getElementById("stopBtn").style.display="inline";
+  }
 
-      if(systemActive){
-        alarmSound.play();
-        document.getElementById("stopBtn").style.display="inline";
-      }
+  if(lastStatus[room]!="ALERT"){
+    var now=new Date();
+    database.ref("history").push({
+      room:room,
+      status:"ALERT",
+      time:now.toLocaleTimeString(),
+      date:now.toLocaleDateString()
+    });
+  }
 
-      // SAVE TO HISTORY
-      database.ref("history").push({
-        room: room,
-        status: status,
-        time: now.toLocaleTimeString(),
-        date: now.toLocaleDateString()
-      });
+}else{
+  li.className="normal";
+}
 
-    }else{
-      li.classList.add("normal");
-    }
-
-    roomList.appendChild(li);
-
-  });
+lastStatus[room]=status;
+roomList.appendChild(li);
 
 });
 
-database.ref("history").on("value", function(snapshot){
+});
 
-  historyList.innerHTML = "";
+// SHOW HISTORY
+database.ref("history").on("value",function(snapshot){
 
-  snapshot.forEach(function(child){
+historyList.innerHTML="";
 
-    var data = child.val();
-
-    var li = document.createElement("li");
-    li.innerText =
-      data.room + " | " +
-      data.status + " | " +
-      data.time + " | " +
-      data.date;
-
-    historyList.appendChild(li);
-
-  });
+snapshot.forEach(function(child){
+var d=child.val();
+var li=document.createElement("li");
+li.innerText=d.room+" | "+d.status+" | "+d.time+" | "+d.date;
+historyList.appendChild(li);
+});
 
 });
 
