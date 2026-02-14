@@ -11,7 +11,6 @@ body{
   text-align:center;
 }
 
-/* LOGIN BOX */
 #loginBox{
   width:300px;
   margin:150px auto;
@@ -28,7 +27,8 @@ input{
 }
 
 button{
-  padding:10px 20px;
+  padding:8px 15px;
+  margin:3px;
   cursor:pointer;
 }
 
@@ -61,7 +61,7 @@ h1{
 
 li{
   list-style:none;
-  margin:8px auto;
+  margin:6px auto;
   padding:10px;
   width:320px;
   border-radius:6px;
@@ -82,7 +82,6 @@ li{
   <h2>Admin Login</h2>
   <input id="username" placeholder="Username">
   <input id="password" type="password" placeholder="Password">
-  <br>
   <button onclick="login()">LOGIN</button>
 </div>
 
@@ -93,8 +92,7 @@ li{
 
 <h3 id="counter">Total Alerts: 0</h3>
 
-<button onclick="activateSystem()">ACTIVATE SYSTEM</button>
-<br><br>
+<button onclick="activateSystem()">ACTIVATE SYSTEM</button><br><br>
 
 <button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
 
@@ -103,6 +101,11 @@ li{
 </audio>
 
 <h2>Room Status</h2>
+
+<button onclick="setFilter('ALL')">ALL</button>
+<button onclick="setFilter('JT')">JATI</button>
+<button onclick="setFilter('MR')">MERANTI</button>
+
 <ul id="roomList"></ul>
 
 <h2>Alert History</h2>
@@ -131,6 +134,7 @@ function login(){
 // SYSTEM
 let systemActive=false;
 let lastStatus={};
+let currentFilter="ALL";
 
 function activateSystem(){
   systemActive=true;
@@ -146,6 +150,10 @@ function stopAlarm(){
 function clearHistory(){
   database.ref("history").remove();
   alert("History Cleared");
+}
+
+function setFilter(type){
+  currentFilter=type;
 }
 
 // FIREBASE
@@ -175,6 +183,12 @@ snapshot.forEach(function(child){
 
 var room=child.key;
 var status=child.val().status;
+
+if(currentFilter!="ALL"){
+  if(!room.startsWith(currentFilter)){
+    return;
+  }
+}
 
 var li=document.createElement("li");
 li.innerText=room+" - "+status;
@@ -212,7 +226,6 @@ roomList.appendChild(li);
 database.ref("history").on("value",function(snapshot){
 
 historyList.innerHTML="";
-
 document.getElementById("counter").innerText =
 "Total Alerts: " + snapshot.numChildren();
 
