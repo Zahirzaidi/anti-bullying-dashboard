@@ -2,45 +2,80 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Anti-Bullying Smart System</title>
-
-<!-- PDF LIBRARY -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<title>Anti-Bullying Dashboard</title>
 
 <style>
 body{font-family:Arial;background:#f2f2f2;text-align:center;}
-#loginBox{width:300px;margin:150px auto;padding:20px;background:#fff;border-radius:10px;}
+
+#loginBox{
+  width:300px;margin:150px auto;padding:20px;
+  background:white;border-radius:10px;
+  box-shadow:0 0 10px gray;
+}
+
 input{width:90%;padding:10px;margin:8px;}
-button{padding:8px 15px;margin:5px;}
+button{padding:8px 15px;margin:3px;cursor:pointer;}
+
 #dashboard{display:none;}
-.alert{background:red;color:white;}
+
+h1{background:#1e88e5;color:white;padding:15px;}
+
+.alert{background:red;color:white;animation:blink 1s infinite;}
+@keyframes blink{0%{opacity:1;}50%{opacity:0.4;}100%{opacity:1;}}
+
 .normal{background:green;color:white;}
-li{list-style:none;margin:5px;padding:10px;border-radius:5px;}
+
+li{
+  list-style:none;margin:6px auto;
+  padding:10px;width:320px;border-radius:6px;
+}
+
+#stopBtn{background:red;color:white;display:none;}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginBox">
-<h2>Login</h2>
-<input id="username" placeholder="Username">
-<input id="password" type="password" placeholder="Password">
-<button onclick="login()">LOGIN</button>
+  <h2>Login</h2>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">LOGIN</button>
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboard">
 
-<h2 id="welcome"></h2>
+<h1>Anti-Bullying Monitor</h1>
+
+<h3 id="counter">Total Alerts: 0</h3>
 
 <button onclick="emergencyAlert()">🚨 EMERGENCY ALERT</button><br><br>
 
-<button id="clearBtn" onclick="clearHistory()">CLEAR HISTORY</button>
-<button onclick="exportPDF()">EXPORT DAILY REPORT</button>
+<button onclick="activateSystem()">ACTIVATE SYSTEM</button><br><br>
+<button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
 
-<h3>Room Status</h3>
+<audio id="alarmSound" loop>
+  <source src="siren.mp3">
+</audio>
+
+<h2>Filter Block</h2>
+<button onclick="setBlockFilter('ALL')">ALL</button>
+<button onclick="setBlockFilter('JT')">JATI</button>
+<button onclick="setBlockFilter('MR')">MERANTI</button>
+
+<h2>Filter Floor</h2>
+<button onclick="setFloorFilter('ALL')">ALL</button>
+<button onclick="setFloorFilter('0')">ARAS 0</button>
+<button onclick="setFloorFilter('1')">ARAS 1</button>
+<button onclick="setFloorFilter('2')">ARAS 2</button>
+
+<h2>Room Status</h2>
 <ul id="roomList"></ul>
 
-<h3>History</h3>
+<h2>Alert History</h2>
+<button id="clearBtn" onclick="clearHistory()">CLEAR HISTORY</button>
 <ul id="historyList"></ul>
 
 </div>
@@ -49,7 +84,19 @@ li{list-style:none;margin:5px;padding:10px;border-radius:5px;}
 
 <script>
 
-// FIREBASE
+// ================= TELEGRAM =================
+const TELEGRAM_TOKEN="8379959788:AAEoE1nv6rCCiMEzNeILgkHUxYf60TEuC58";
+const CHAT_ID="644110489";
+
+function sendTelegram(message){
+ fetch("https://api.telegram.org/bot"+TELEGRAM_TOKEN+"/sendMessage",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({chat_id:CHAT_ID,text:message})
+ });
+}
+
+// ================= FIREBASE =================
 firebase.initializeApp({
  apiKey:"AIzaSyAMstKG96DUKOPbJQZKKssWtHbc4iLtccI",
  authDomain:"antibullyingsystem-95305.firebaseapp.com",
@@ -57,109 +104,198 @@ firebase.initializeApp({
  projectId:"antibullyingsystem-95305"
 });
 
-let db=firebase.database();
-let currentUser="", currentRole="";
+var database=firebase.database();
 
-// LOGIN
+// ================= GLOBAL =================
+let systemActive=false;
+let lastStatus={};
+let currentBlock="ALL";
+let currentFloor="ALL";
+
+let currentUser="";
+let currentRole="";
+
+// ================= LOGIN =================
 function login(){
- let u=username.value;
- let p=password.value;
 
- db.ref("users/"+u).once("value",snap=>{
-   if(!snap.exists()){alert("User not found");return;}
-   let d=snap.val();
-   if(d.password==p){
-     currentUser=u;
-     currentRole=d.role;
-     loginBox.style.display="none";
-     dashboard.style.display="block";
-     welcome.innerText="Welcome "+u+" ("+currentRole+")";
+ var u=username.value;
+ var p=password.value;
 
-     if(currentRole!="admin") clearBtn.style.display="none";
+ database.ref("users/"+u).once("value",function(snap){
 
-     dailyResetCheck();
-     loadRooms();
-     loadHistory();
-   }else alert("Wrong password");
+  if(!snap.exists()){
+    alert("User not found");
+    return;
+  }
+
+  var d=snap.val();
+
+  if(d.password==p){
+
+    currentUser=u;
+    currentRole=d.role;
+
+    loginBox.style.display="none";
+    dashboard.style.display="block";
+
+    alert("Welcome "+u+" ("+currentRole+")");
+
+    if(currentRole!="admin"){
+      clearBtn.style.display="none";
+    }
+
+    refreshRooms();
+
+  }else{
+    alert("Wrong password");
+  }
+
  });
+
 }
 
-// ROOMS
-function loadRooms(){
- db.ref("rooms").on("value",snap=>{
-  roomList.innerHTML="";
-  snap.forEach(c=>{
-    let li=document.createElement("li");
-    li.innerText=c.key+" - "+c.val().status;
-    li.className=c.val().status=="ALERT"?"alert":"normal";
-    roomList.appendChild(li);
-  });
- });
+// ================= SYSTEM =================
+function activateSystem(){
+ systemActive=true;
+ alert("System Activated");
 }
 
-// HISTORY
-function loadHistory(){
- db.ref("history").on("value",snap=>{
-  historyList.innerHTML="";
-  snap.forEach(c=>{
-    let d=c.val();
-    let li=document.createElement("li");
-    li.innerText=d.type+" | "+d.triggeredBy+" ("+d.role+") | "+d.time;
-    historyList.appendChild(li);
-  });
- });
+function stopAlarm(){
+ alarmSound.pause();
+ alarmSound.currentTime=0;
+ stopBtn.style.display="none";
 }
 
-// EMERGENCY
+function clearHistory(){
+ database.ref("history").remove();
+ alert("History Cleared");
+}
+
+function setBlockFilter(b){
+ currentBlock=b;
+ refreshRooms();
+}
+
+function setFloorFilter(f){
+ currentFloor=f;
+ refreshRooms();
+}
+
+// ================= EMERGENCY =================
 function emergencyAlert(){
- let now=new Date();
- db.ref("history").push({
-  type:"EMERGENCY",
+
+ var now=new Date();
+
+ var msg=
+ "🚨 EMERGENCY ALERT 🚨\n\n"+
+ "Triggered By: "+currentUser+" ("+currentRole+")\n"+
+ "Time: "+now.toLocaleTimeString()+"\n"+
+ "Date: "+now.toLocaleDateString();
+
+ sendTelegram(msg);
+
+ database.ref("history").push({
+  room:"EMERGENCY",
+  status:"EMERGENCY",
   triggeredBy:currentUser,
   role:currentRole,
   time:now.toLocaleTimeString(),
   date:now.toLocaleDateString()
  });
- alert("Emergency Triggered!");
+
+ alert("Emergency Alert Sent!");
 }
 
-// CLEAR HISTORY (ADMIN ONLY)
-function clearHistory(){
- db.ref("history").remove();
- alert("History Cleared");
-}
+// ================= ROOMS =================
+var roomList=document.getElementById("roomList");
+var historyList=document.getElementById("historyList");
+var alarmSound=document.getElementById("alarmSound");
 
-// DAILY RESET 8AM
-function dailyResetCheck(){
- let today=new Date().toLocaleDateString();
- let hour=new Date().getHours();
+function refreshRooms(){
 
- db.ref("system/lastReset").once("value",snap=>{
-   let last=snap.val();
-   if(last!=today && hour>=8){
-     db.ref("history").remove();
-     db.ref("system/lastReset").set(today);
+ database.ref("rooms").once("value",function(snapshot){
+
+  roomList.innerHTML="";
+
+  snapshot.forEach(function(child){
+
+   var room=child.key;
+   var status=child.val().status;
+
+   if(currentBlock!="ALL" && !room.startsWith(currentBlock)) return;
+   if(currentFloor!="ALL" && room[2]!=currentFloor) return;
+
+   var li=document.createElement("li");
+   li.innerText=room+" - "+status;
+
+   if(status=="ALERT"){
+    li.className="alert";
+
+    if(systemActive){
+      alarmSound.play();
+      stopBtn.style.display="inline";
+    }
+
+    if(lastStatus[room]!="ALERT"){
+
+      var now=new Date();
+
+      var msg=
+      "🚨 ANTI-BULLYING ALERT 🚨\n\n"+
+      "Room: "+room+"\n"+
+      "Time: "+now.toLocaleTimeString()+"\n"+
+      "Date: "+now.toLocaleDateString();
+
+      sendTelegram(msg);
+
+      database.ref("history").push({
+       room:room,
+       status:"ALERT",
+       time:now.toLocaleTimeString(),
+       date:now.toLocaleDateString()
+      });
+
+    }
+
+   }else{
+    li.className="normal";
    }
+
+   lastStatus[room]=status;
+   roomList.appendChild(li);
+
+  });
+
  });
+
 }
 
-// EXPORT PDF
-function exportPDF(){
- const {jsPDF}=window.jspdf;
- let doc=new jsPDF();
- let y=10;
- doc.text("Daily Anti-Bullying Report",10,y);
- y+=10;
+database.ref("rooms").on("value",function(){
+ refreshRooms();
+});
 
- db.ref("history").once("value",snap=>{
-   snap.forEach(c=>{
-     let d=c.val();
-     doc.text(d.type+" | "+d.triggeredBy+" | "+d.time,10,y);
-     y+=10;
-   });
-   doc.save("daily_report.pdf");
+// ================= HISTORY =================
+database.ref("history").on("value",function(snapshot){
+
+ historyList.innerHTML="";
+ counter.innerText="Total Alerts: "+snapshot.numChildren();
+
+ snapshot.forEach(function(child){
+
+  var d=child.val();
+  var li=document.createElement("li");
+
+  if(d.status=="EMERGENCY"){
+    li.innerText="EMERGENCY | "+d.triggeredBy+" ("+d.role+") | "+d.time;
+  }else{
+    li.innerText=d.room+" | "+d.status+" | "+d.time+" | "+d.date;
+  }
+
+  historyList.appendChild(li);
+
  });
-}
+
+});
 
 </script>
 
