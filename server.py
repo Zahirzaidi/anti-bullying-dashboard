@@ -16,6 +16,7 @@ FIREBASE_KEY_PATH = BASE_DIR / "firebase_key.json"
 FIREBASE_DATABASE_URL = "https://antibullyingsystem-95305-default-rtdb.firebaseio.com/"
 DEFAULT_ROOM_ID = os.getenv("ROOM_ID", "JT0-01")
 DEFAULT_SAMPLE_RATE = int(os.getenv("AUDIO_SAMPLE_RATE", "4000"))
+MIN_AUDIO_SAMPLES = int(os.getenv("MIN_AUDIO_SAMPLES", "256"))
 
 model = None
 startup_errors = []
@@ -56,10 +57,14 @@ def extract_features(audio_bytes, sample_rate):
     audio_data = np.frombuffer(audio_bytes, dtype=np.int16)
     if audio_data.size == 0:
         raise ValueError("Empty audio payload")
+    if audio_data.size < MIN_AUDIO_SAMPLES:
+        raise ValueError(
+            f"Audio payload too short: got {audio_data.size} samples, need at least {MIN_AUDIO_SAMPLES}"
+        )
 
     normalized_audio = audio_data.astype(np.float32) / 32768.0
     mfcc = librosa.feature.mfcc(y=normalized_audio, sr=sample_rate, n_mfcc=13)
-    return np.mean(mfcc.T, axis=0)
+    return np.mean(mfcc.T, axis=0), int(audio_data.size)
 
 
 def update_room_status(room_id, status, prediction):
@@ -76,6 +81,27 @@ model = load_model()
 firebase_ready = init_firebase()
 
 
+@app.get("/audio-spec")
+def audio_spec():
+    return jsonify(
+        {
+            "method": "POST",
+            "path": "/audio",
+            "query_params": {
+                "room": f"Optional. Default: {DEFAULT_ROOM_ID}",
+                "sr": f"Optional. Default: {DEFAULT_SAMPLE_RATE}",
+            },
+            "body_format": {
+                "type": "raw bytes",
+                "encoding": "PCM signed 16-bit little-endian",
+                "channels": 1,
+                "sample_rate": DEFAULT_SAMPLE_RATE,
+                "minimum_samples": MIN_AUDIO_SAMPLES,
+            },
+        }
+    )
+
+
 @app.get("/health")
 def health():
     return jsonify(
@@ -84,6 +110,9 @@ def health():
             "model_loaded": model is not None,
             "firebase_ready": firebase_ready,
             "errors": startup_errors,
+            "default_room": DEFAULT_ROOM_ID,
+            "default_sample_rate": DEFAULT_SAMPLE_RATE,
+            "minimum_audio_samples": MIN_AUDIO_SAMPLES,
         }
     )
 
@@ -100,7 +129,7 @@ def process_audio():
     sample_rate = request.args.get("sr", type=int) or DEFAULT_SAMPLE_RATE
 
     try:
-        mfcc_mean = extract_features(request.data, sample_rate)
+        mfcc_mean, sample_count = extract_features(request.data, sample_rate)
         prediction = model.predict([mfcc_mean])[0]
         status = "ALERT" if str(prediction).lower() == "scream" else "NORMAL"
         update_room_status(room_id, status, str(prediction))
@@ -112,6 +141,7 @@ def process_audio():
             "ok": True,
             "room": room_id,
             "sample_rate": sample_rate,
+            "sample_count": sample_count,
             "prediction": str(prediction),
             "status": status,
         }
