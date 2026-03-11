@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "model.pkl"
 FIREBASE_KEY_PATH = BASE_DIR / "firebase_key.json"
 FIREBASE_DATABASE_URL = "https://antibullyingsystem-95305-default-rtdb.firebaseio.com/"
-DEFAULT_ROOM_ID = os.getenv("ROOM_ID", "JT0-01")
+DEFAULT_ROOM_ID = os.getenv("ROOM_ID", "JT001")
 DEFAULT_SAMPLE_RATE = int(os.getenv("AUDIO_SAMPLE_RATE", "4000"))
 MIN_AUDIO_SAMPLES = int(os.getenv("MIN_AUDIO_SAMPLES", "256"))
 

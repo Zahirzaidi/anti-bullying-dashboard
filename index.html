@@ -123,6 +123,7 @@ var database=firebase.database();
 // ================= GLOBAL =================
 let systemActive=false;
 let lastStatus={};
+let latchedAlerts={};
 let currentBlock="ALL";
 let currentFloor="ALL";
 let currentUser="";
@@ -174,11 +175,30 @@ function activateSystem(){
 }
 
 function stopAlarm(){
+ var now=new Date();
+ var latchedRooms=Object.keys(latchedAlerts).filter(function(room){
+  return latchedAlerts[room];
+ });
+
  alarmSound.pause();
  alarmSound.currentTime=0;
  stopBtn.style.display="none";
+ latchedAlerts={};
 
  emergencyBtn.classList.remove("emergencyBlink");
+
+ if(latchedRooms.length){
+  database.ref("history").push({
+   room:latchedRooms.join(", "),
+   status:"ACKNOWLEDGED",
+   triggeredBy:currentUser || "warden",
+   role:currentRole || "unknown",
+   time:now.toLocaleTimeString(),
+   date:now.toLocaleDateString()
+  });
+ }
+
+ refreshRooms();
 }
 
 function clearHistory(){
@@ -240,14 +260,18 @@ function refreshRooms(){
 
    var room=child.key;
    var status=child.val().status;
+   var displayStatus=latchedAlerts[room] ? "ALERT" : status;
 
    if(currentBlock!="ALL" && !room.startsWith(currentBlock)) return;
    if(currentFloor!="ALL" && room[2]!=currentFloor) return;
 
    var li=document.createElement("li");
-   li.innerText=room+" - "+status;
+   li.innerText=room+" - "+displayStatus;
 
    if(status=="ALERT"){
+    latchedAlerts[room]=true;
+    displayStatus="ALERT";
+    li.innerText=room+" - "+displayStatus;
     li.className="alert";
 
     if(systemActive){
@@ -274,6 +298,14 @@ function refreshRooms(){
        date:now.toLocaleDateString()
       });
 
+    }
+
+   }else if(latchedAlerts[room]){
+    li.className="alert";
+
+    if(systemActive){
+      alarmSound.play();
+      stopBtn.style.display="inline";
     }
 
    }else{
@@ -320,6 +352,8 @@ database.ref("history").on("value",function(snapshot){
 
   if(d.status=="EMERGENCY"){
     li.innerText="EMERGENCY | "+d.triggeredBy+" ("+d.role+") | "+d.time;
+  }else if(d.status=="ACKNOWLEDGED"){
+    li.innerText="ACKNOWLEDGED | "+d.room+" | "+d.triggeredBy+" ("+d.role+") | "+d.time;
   }else{
     li.innerText=d.room+" | "+d.status+" | "+d.time+" | "+d.date;
   }
