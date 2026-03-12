@@ -2,95 +2,626 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anti-Bullying Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:Arial;background:#f2f2f2;text-align:center;}
-
-#loginBox{
-  width:300px;margin:150px auto;padding:20px;
-  background:white;border-radius:10px;
-  box-shadow:0 0 10px gray;
+:root{
+  --bg:#f3efe5;
+  --bg-soft:#fbf8f1;
+  --panel:#fffdf8;
+  --ink:#14213d;
+  --muted:#5f6b7a;
+  --line:rgba(20,33,61,.12);
+  --primary:#0f6c5c;
+  --primary-dark:#094f44;
+  --danger:#c6352b;
+  --danger-dark:#8f1f18;
+  --success:#1d8a4d;
+  --warning:#f2b33d;
+  --shadow:0 20px 45px rgba(20,33,61,.12);
+  --shadow-soft:0 12px 24px rgba(20,33,61,.08);
+  --radius-xl:28px;
+  --radius-lg:20px;
+  --radius-md:14px;
 }
 
-input{width:90%;padding:10px;margin:8px;}
-button{padding:8px 15px;margin:3px;cursor:pointer;}
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:"DM Sans",sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(15,108,92,.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(198,53,43,.14), transparent 24%),
+    linear-gradient(180deg, #f8f4ec 0%, #efe7d8 100%);
+}
+
+button,input{
+  font:inherit;
+}
+
+button{
+  border:none;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+button:hover{
+  transform:translateY(-1px);
+}
+
+button:active{
+  transform:translateY(0);
+}
+
+.page-shell{
+  width:min(1180px, calc(100% - 32px));
+  margin:0 auto;
+  padding:28px 0 48px;
+}
+
+#loginBox{
+  width:min(460px, 100%);
+  margin:60px auto 0;
+  padding:34px;
+  background:rgba(255,253,248,.9);
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(12px);
+}
+
+.login-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  border-radius:999px;
+  background:#ecf7f4;
+  color:var(--primary-dark);
+  font-size:.9rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.login-badge::before{
+  content:"";
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--primary);
+  box-shadow:0 0 0 6px rgba(15,108,92,.12);
+}
+
+.hero-title,
+h1,h2,h3{
+  font-family:"Space Grotesk",sans-serif;
+  margin:0;
+}
+
+.hero-title{
+  margin-top:20px;
+  font-size:clamp(2.2rem, 5vw, 3.3rem);
+  line-height:.98;
+}
+
+.hero-subtitle{
+  margin:14px 0 28px;
+  color:var(--muted);
+  font-size:1rem;
+  line-height:1.7;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.field label{
+  font-size:.92rem;
+  font-weight:700;
+  color:var(--ink);
+}
+
+input{
+  width:100%;
+  padding:15px 16px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  color:var(--ink);
+  outline:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+input:focus{
+  border-color:rgba(15,108,92,.4);
+  box-shadow:0 0 0 4px rgba(15,108,92,.12);
+}
+
+.primary-btn{
+  width:100%;
+  padding:16px 18px;
+  border-radius:18px;
+  background:linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color:#fff;
+  font-weight:700;
+  box-shadow:0 16px 30px rgba(15,108,92,.22);
+}
 
 #dashboard{display:none;}
 
-h1{background:#1e88e5;color:white;padding:15px;}
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:340px minmax(0, 1fr);
+  gap:22px;
+  align-items:start;
+}
+
+.panel{
+  background:rgba(255,253,248,.92);
+  border:1px solid rgba(255,255,255,.6);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-soft);
+  backdrop-filter:blur(10px);
+}
+
+.sidebar{
+  position:sticky;
+  top:24px;
+  padding:24px;
+}
+
+.brand-block{
+  padding:8px 0 22px;
+  border-bottom:1px solid var(--line);
+}
+
+.brand-kicker{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#eef7f2;
+  color:var(--primary-dark);
+  font-size:.8rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.brand-block h1{
+  margin-top:14px;
+  font-size:2.4rem;
+  line-height:.95;
+}
+
+.brand-block p{
+  margin:14px 0 0;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.counter-card{
+  margin-top:22px;
+  padding:18px 20px;
+  border-radius:22px;
+  background:linear-gradient(135deg, #14213d 0%, #223b6b 100%);
+  color:#fff;
+}
+
+.counter-card span{
+  display:block;
+  color:rgba(255,255,255,.72);
+  font-size:.84rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.counter-card strong{
+  display:block;
+  margin-top:8px;
+  font-family:"Space Grotesk",sans-serif;
+  font-size:2.3rem;
+}
+
+.action-stack{
+  display:grid;
+  gap:12px;
+  margin-top:22px;
+}
+
+.action-btn{
+  width:100%;
+  padding:14px 16px;
+  border-radius:18px;
+  font-weight:700;
+}
+
+.emergency-btn{
+  background:linear-gradient(135deg, #ffd6d1 0%, #ffc1b9 100%);
+  color:var(--danger-dark);
+}
+
+.activate-btn{
+  background:linear-gradient(135deg, #dff5ef 0%, #ccece4 100%);
+  color:var(--primary-dark);
+}
+
+#stopBtn{
+  display:none;
+  background:linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
+  color:#fff;
+  box-shadow:0 16px 26px rgba(198,53,43,.24);
+}
+
+.status-note{
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:.94rem;
+  line-height:1.7;
+}
+
+.content{
+  display:grid;
+  gap:22px;
+}
+
+.hero-panel{
+  padding:26px;
+  overflow:hidden;
+}
+
+.hero-strip{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+
+.hero-copy{
+  max-width:620px;
+}
+
+.hero-copy h2{
+  font-size:clamp(2rem, 4vw, 3rem);
+  line-height:1;
+}
+
+.hero-copy p{
+  margin:14px 0 0;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.system-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 18px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+  font-weight:700;
+}
+
+.system-pill::before{
+  content:"";
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:var(--warning);
+}
+
+.filters-card,
+.history-card{
+  padding:24px 26px;
+}
+
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+
+.section-head p{
+  margin:6px 0 0;
+  color:var(--muted);
+}
+
+.filter-layout{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:18px;
+}
+
+.filter-group{
+  padding:18px;
+  border-radius:20px;
+  background:var(--bg-soft);
+  border:1px solid rgba(20,33,61,.08);
+}
+
+.filter-group h3{
+  font-size:1.1rem;
+  margin-bottom:14px;
+}
+
+.button-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.filter-btn,
+.utility-btn{
+  padding:11px 15px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--ink);
+  font-weight:700;
+}
+
+.filter-btn:hover,
+.utility-btn:hover{
+  background:#f7f2e7;
+}
+
+.room-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:14px;
+}
+
+li{
+  list-style:none;
+}
+
+#roomList,
+#historyList{
+  margin:0;
+  padding:0;
+}
+
+#roomList li{
+  position:relative;
+  min-height:116px;
+  padding:18px 18px 16px;
+  border-radius:22px;
+  overflow:hidden;
+  border:1px solid rgba(20,33,61,.08);
+  box-shadow:var(--shadow-soft);
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  font-weight:700;
+  font-size:1.05rem;
+}
+
+#roomList li::before{
+  content:"ROOM";
+  position:absolute;
+  top:16px;
+  left:18px;
+  font-size:.76rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  opacity:.68;
+}
 
 .alert{
-  background:red;color:white;
-  animation:blink 1s infinite;
+  color:#fff;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.18), transparent 26%),
+    linear-gradient(135deg, var(--danger) 0%, #ff4d3d 100%);
+  animation:blink 1.1s infinite;
+}
+
+.normal{
+  color:#fff;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.16), transparent 26%),
+    linear-gradient(135deg, var(--success) 0%, #1ea05a 100%);
 }
 
 .emergencyBlink{
-  background:red;
-  color:white;
+  background:linear-gradient(135deg, var(--danger) 0%, #ff6c54 100%);
+  color:#fff;
   animation:blink 1s infinite;
 }
 
 @keyframes blink{
   0%{opacity:1;}
-  50%{opacity:0.4;}
+  50%{opacity:.48;}
   100%{opacity:1;}
 }
 
-.normal{background:green;color:white;}
-
-li{
-  list-style:none;margin:6px auto;
-  padding:10px;width:320px;border-radius:6px;
+.history-card{
+  min-height:280px;
 }
 
-#stopBtn{background:red;color:white;display:none;}
+#historyList{
+  display:grid;
+  gap:12px;
+}
+
+#historyList li{
+  padding:14px 16px;
+  border-radius:16px;
+  background:var(--bg-soft);
+  border:1px solid rgba(20,33,61,.08);
+  color:var(--ink);
+  line-height:1.55;
+}
+
+@media (max-width: 980px){
+  .dashboard-grid{
+    grid-template-columns:1fr;
+  }
+
+  .sidebar{
+    position:static;
+  }
+}
+
+@media (max-width: 720px){
+  .page-shell{
+    width:min(100% - 20px, 1180px);
+    padding:16px 0 28px;
+  }
+
+  #loginBox,
+  .sidebar,
+  .hero-panel,
+  .filters-card,
+  .history-card{
+    padding:20px;
+    border-radius:22px;
+  }
+
+  .filter-layout{
+    grid-template-columns:1fr;
+  }
+
+  .hero-copy h2{
+    font-size:2rem;
+  }
+}
 </style>
 </head>
 
 <body>
+<div class="page-shell">
 
 <!-- LOGIN -->
 <div id="loginBox">
-  <h2>Login</h2>
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">LOGIN</button>
+  <span class="login-badge">Live Monitoring</span>
+  <h1 class="hero-title">Anti-Bullying Warden Console</h1>
+  <p class="hero-subtitle">Monitor room activity, respond to emergency alerts, and track acknowledgement history from one interface.</p>
+
+  <div class="field">
+    <label for="username">Username</label>
+    <input id="username" placeholder="Enter username">
+  </div>
+
+  <div class="field">
+    <label for="password">Password</label>
+    <input id="password" type="password" placeholder="Enter password">
+  </div>
+
+  <button class="primary-btn" onclick="login()">Login to Dashboard</button>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard">
+  <div class="dashboard-grid">
+    <aside class="panel sidebar">
+      <div class="brand-block">
+        <span class="brand-kicker">Warden Panel</span>
+        <h1>Safe Campus Monitor</h1>
+        <p>Real-time room visibility for block monitoring, emergency response, and incident acknowledgement.</p>
+      </div>
 
-<h1>Anti-Bullying Monitor</h1>
+      <div class="counter-card">
+        <span>Total Alerts Recorded</span>
+        <strong id="counter">0</strong>
+      </div>
 
-<h3 id="counter">Total Alerts: 0</h3>
+      <div class="action-stack">
+        <button id="emergencyBtn" class="action-btn emergency-btn" onclick="emergencyAlert()">Emergency Alert</button>
+        <button class="action-btn activate-btn" onclick="activateSystem()">Activate System</button>
+        <button id="stopBtn" class="action-btn" onclick="stopAlarm()">Stop Alarm</button>
+      </div>
 
-<button id="emergencyBtn" onclick="emergencyAlert()">🚨 EMERGENCY ALERT</button><br><br>
+      <div class="status-note">
+        Alerts remain latched on the interface until a warden acknowledges them using <strong>Stop Alarm</strong>.
+      </div>
 
-<button onclick="activateSystem()">ACTIVATE SYSTEM</button><br><br>
-<button id="stopBtn" onclick="stopAlarm()">STOP ALARM</button>
+      <audio id="alarmSound" loop>
+        <source src="siren.mp3">
+      </audio>
+    </aside>
 
-<audio id="alarmSound" loop>
-  <source src="siren.mp3">
-</audio>
+    <main class="content">
+      <section class="panel hero-panel">
+        <div class="hero-strip">
+          <div class="hero-copy">
+            <h2>Anti-Bullying Monitor</h2>
+            <p>Track room states live, focus by block or floor, and keep a clear response trail for each triggered alert.</p>
+          </div>
+          <div class="system-pill">Alarm standby</div>
+        </div>
+      </section>
 
-<h2>Filter Block</h2>
-<button onclick="setBlockFilter('ALL')">ALL</button>
-<button onclick="setBlockFilter('JT')">JATI</button>
-<button onclick="setBlockFilter('MR')">MERANTI</button>
+      <section class="panel filters-card">
+        <div class="section-head">
+          <div>
+            <h2>Filter Rooms</h2>
+            <p>Narrow the room list by block and floor without interrupting real-time updates.</p>
+          </div>
+        </div>
 
-<h2>Filter Floor</h2>
-<button onclick="setFloorFilter('ALL')">ALL</button>
-<button onclick="setFloorFilter('0')">ARAS 0</button>
-<button onclick="setFloorFilter('1')">ARAS 1</button>
-<button onclick="setFloorFilter('2')">ARAS 2</button>
+        <div class="filter-layout">
+          <div class="filter-group">
+            <h3>Filter Block</h3>
+            <div class="button-row">
+              <button class="filter-btn" onclick="setBlockFilter('ALL')">All</button>
+              <button class="filter-btn" onclick="setBlockFilter('JT')">Jati</button>
+              <button class="filter-btn" onclick="setBlockFilter('MR')">Meranti</button>
+            </div>
+          </div>
 
-<h2>Room Status</h2>
-<ul id="roomList"></ul>
+          <div class="filter-group">
+            <h3>Filter Floor</h3>
+            <div class="button-row">
+              <button class="filter-btn" onclick="setFloorFilter('ALL')">All</button>
+              <button class="filter-btn" onclick="setFloorFilter('0')">Aras 0</button>
+              <button class="filter-btn" onclick="setFloorFilter('1')">Aras 1</button>
+              <button class="filter-btn" onclick="setFloorFilter('2')">Aras 2</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-<h2>Alert History</h2>
-<button id="clearBtn" onclick="clearHistory()">CLEAR HISTORY</button>
-<ul id="historyList"></ul>
+      <section class="panel filters-card">
+        <div class="section-head">
+          <div>
+            <h2>Room Status</h2>
+            <p>Rooms turn red when alert is triggered and stay latched until the warden stops the alarm.</p>
+          </div>
+        </div>
+        <ul id="roomList" class="room-grid"></ul>
+      </section>
+
+      <section class="panel history-card">
+        <div class="section-head">
+          <div>
+            <h2>Alert History</h2>
+            <p>Review triggered alerts, emergencies, and acknowledgements from the current monitoring session.</p>
+          </div>
+          <button id="clearBtn" class="utility-btn" onclick="clearHistory()">Clear History</button>
+        </div>
+        <ul id="historyList"></ul>
+      </section>
+    </main>
+  </div>
+</div>
 
 </div>
 
@@ -227,7 +758,7 @@ function emergencyAlert(){
  emergencyBtn.classList.add("emergencyBlink");
 
  var msg=
- "🚨 EMERGENCY ALERT 🚨\n\n"+
+ "EMERGENCY ALERT\n\n"+
  "Triggered By: "+currentUser+" ("+currentRole+")\n"+
  "Time: "+now.toLocaleTimeString()+"\n"+
  "Date: "+now.toLocaleDateString();
@@ -284,7 +815,7 @@ function refreshRooms(){
       var now=new Date();
 
       var msg=
-      "🚨 ANTI-BULLYING ALERT 🚨\n\n"+
+      "ANTI-BULLYING ALERT\n\n"+
       "Room: "+room+"\n"+
       "Time: "+now.toLocaleTimeString()+"\n"+
       "Date: "+now.toLocaleDateString();
@@ -343,7 +874,7 @@ database.ref("rooms").on("value",function(snapshot){
 database.ref("history").on("value",function(snapshot){
 
  historyList.innerHTML="";
- counter.innerText="Total Alerts: "+snapshot.numChildren();
+ counter.innerText=snapshot.numChildren();
 
  snapshot.forEach(function(child){
 
