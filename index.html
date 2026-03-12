@@ -27,6 +27,8 @@
   --radius-xl:28px;
   --radius-lg:20px;
   --radius-md:14px;
+  --hostel-image:url("https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80");
+  --campus-image:url("https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1600&q=80");
 }
 
 *{box-sizing:border-box;}
@@ -67,14 +69,111 @@ button:active{
 }
 
 #loginBox{
-  width:min(460px, 100%);
-  margin:60px auto 0;
-  padding:34px;
-  background:rgba(255,253,248,.9);
+  width:min(1120px, 100%);
+  margin:30px auto 0;
+  padding:0;
+  display:grid;
+  grid-template-columns:minmax(0, 1.1fr) minmax(360px, .9fr);
+  overflow:hidden;
+  background:rgba(255,253,248,.8);
   border:1px solid rgba(255,255,255,.55);
   border-radius:var(--radius-xl);
   box-shadow:var(--shadow);
   backdrop-filter:blur(12px);
+}
+
+.login-visual{
+  min-height:680px;
+  padding:36px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  background:
+    linear-gradient(180deg, rgba(20,33,61,.16), rgba(20,33,61,.72)),
+    var(--hostel-image) center/cover no-repeat;
+  color:#fff;
+}
+
+.login-visual::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.22), transparent 28%),
+    linear-gradient(135deg, rgba(15,108,92,.18), transparent 45%);
+  pointer-events:none;
+}
+
+.visual-top,
+.visual-bottom{
+  position:relative;
+  z-index:1;
+}
+
+.visual-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(10px);
+  font-size:.82rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.visual-kicker::before{
+  content:"";
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#7af2b7;
+}
+
+.visual-title{
+  max-width:560px;
+  margin-top:18px;
+  font-family:"Space Grotesk",sans-serif;
+  font-size:clamp(2.6rem, 5vw, 4.7rem);
+  line-height:.92;
+}
+
+.visual-copy{
+  max-width:520px;
+  margin-top:18px;
+  color:rgba(255,255,255,.86);
+  line-height:1.75;
+}
+
+.visual-card{
+  width:min(420px, 100%);
+  padding:20px 22px;
+  border-radius:22px;
+  background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(14px);
+}
+
+.visual-card strong{
+  display:block;
+  font-family:"Space Grotesk",sans-serif;
+  font-size:1.15rem;
+}
+
+.visual-card span{
+  display:block;
+  margin-top:8px;
+  color:rgba(255,255,255,.82);
+  line-height:1.65;
+}
+
+.login-form{
+  padding:42px 34px;
+  background:linear-gradient(180deg, rgba(255,253,248,.96), rgba(249,244,234,.98));
 }
 
 .login-badge{
@@ -278,7 +377,7 @@ input:focus{
 }
 
 .hero-panel{
-  padding:26px;
+  padding:0;
   overflow:hidden;
 }
 
@@ -290,8 +389,30 @@ input:focus{
   flex-wrap:wrap;
 }
 
+.hero-media{
+  position:relative;
+  padding:28px;
+  min-height:260px;
+  background:
+    linear-gradient(180deg, rgba(20,33,61,.28), rgba(20,33,61,.76)),
+    var(--campus-image) center/cover no-repeat;
+  color:#fff;
+}
+
+.hero-media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.18), transparent 24%),
+    linear-gradient(135deg, rgba(15,108,92,.22), transparent 50%);
+  pointer-events:none;
+}
+
 .hero-copy{
   max-width:620px;
+  position:relative;
+  z-index:1;
 }
 
 .hero-copy h2{
@@ -315,6 +436,8 @@ input:focus{
   border:1px solid var(--line);
   box-shadow:var(--shadow-soft);
   font-weight:700;
+  position:relative;
+  z-index:1;
 }
 
 .system-pill::before{
@@ -328,6 +451,22 @@ input:focus{
 .filters-card,
 .history-card{
   padding:24px 26px;
+}
+
+.filters-card{
+  position:relative;
+  overflow:hidden;
+}
+
+.filters-card::before{
+  content:"";
+  position:absolute;
+  inset:auto -60px -70px auto;
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(15,108,92,.14), transparent 68%);
+  pointer-events:none;
 }
 
 .section-head{
@@ -454,6 +593,19 @@ li{
 
 .history-card{
   min-height:280px;
+  position:relative;
+  overflow:hidden;
+}
+
+.history-card::before{
+  content:"";
+  position:absolute;
+  inset:20px auto auto -40px;
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(198,53,43,.12), transparent 68%);
+  pointer-events:none;
 }
 
 #historyList{
@@ -471,6 +623,14 @@ li{
 }
 
 @media (max-width: 980px){
+  #loginBox{
+    grid-template-columns:1fr;
+  }
+
+  .login-visual{
+    min-height:420px;
+  }
+
   .dashboard-grid{
     grid-template-columns:1fr;
   }
@@ -502,6 +662,11 @@ li{
   .hero-copy h2{
     font-size:2rem;
   }
+
+  .login-visual,
+  .login-form{
+    padding:22px;
+  }
 }
 </style>
 </head>
@@ -511,21 +676,38 @@ li{
 
 <!-- LOGIN -->
 <div id="loginBox">
-  <span class="login-badge">Live Monitoring</span>
-  <h1 class="hero-title">Anti-Bullying Warden Console</h1>
-  <p class="hero-subtitle">Monitor room activity, respond to emergency alerts, and track acknowledgement history from one interface.</p>
+  <div class="login-visual">
+    <div class="visual-top">
+      <span class="visual-kicker">Student Hostel Watch</span>
+      <h1 class="visual-title">Protect hostel spaces with faster response.</h1>
+      <p class="visual-copy">A focused control interface for wardens to monitor room alerts, receive emergency escalation, and document action taken in real time.</p>
+    </div>
 
-  <div class="field">
-    <label for="username">Username</label>
-    <input id="username" placeholder="Enter username">
+    <div class="visual-bottom">
+      <div class="visual-card">
+        <strong>Live room intelligence</strong>
+        <span>Track room status instantly, hold alerts on screen until acknowledgement, and keep response history organized for follow-up.</span>
+      </div>
+    </div>
   </div>
 
-  <div class="field">
-    <label for="password">Password</label>
-    <input id="password" type="password" placeholder="Enter password">
-  </div>
+  <div class="login-form">
+    <span class="login-badge">Live Monitoring</span>
+    <h1 class="hero-title">Anti-Bullying Warden Console</h1>
+    <p class="hero-subtitle">Sign in to open the live hostel dashboard, trigger emergency escalation, and acknowledge alerts after investigation.</p>
 
-  <button class="primary-btn" onclick="login()">Login to Dashboard</button>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" placeholder="Enter username">
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Enter password">
+    </div>
+
+    <button class="primary-btn" onclick="login()">Login to Dashboard</button>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
@@ -560,12 +742,14 @@ li{
 
     <main class="content">
       <section class="panel hero-panel">
-        <div class="hero-strip">
-          <div class="hero-copy">
-            <h2>Anti-Bullying Monitor</h2>
-            <p>Track room states live, focus by block or floor, and keep a clear response trail for each triggered alert.</p>
+        <div class="hero-media">
+          <div class="hero-strip">
+            <div class="hero-copy">
+              <h2>Anti-Bullying Monitor</h2>
+              <p>Live hostel supervision interface for wardens with real-time room visibility, alert escalation, and acknowledgement tracking in one screen.</p>
+            </div>
+            <div class="system-pill">Alarm standby</div>
           </div>
-          <div class="system-pill">Alarm standby</div>
         </div>
       </section>
 
